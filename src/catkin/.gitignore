@@ -10,3 +10,6 @@ src/CMakeLists.txt
 
 # Python
 *.pyc
+
+#Virtual Environment
+venv/
