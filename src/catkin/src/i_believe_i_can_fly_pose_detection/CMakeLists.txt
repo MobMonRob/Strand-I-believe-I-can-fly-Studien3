@@ -14,6 +14,7 @@ add_message_files(
     Calibration.msg
     Instruction.msg
     Instructions.msg
+    FOVInstructions.msg
 )
 
 generate_messages(

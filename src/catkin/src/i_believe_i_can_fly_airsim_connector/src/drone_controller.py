@@ -5,6 +5,14 @@ import time
 import rospy
 from instruction import Instruction
 
+# TODO: add FOV (field of view) control (either add FOV to instuction (and instructionsMsg) or add an fovInstructionMsg and fovInstruction)
+# camera_pose = airsim.Pose(airsim.Vector3r(0, 0, 0), airsim.to_quaternion(math.radians(15), 0, 0)) #radians # changes pose and orientation
+# client.simSetCameraPose("0", camera_pose)
+#
+# pose = Pose(orientation_val = orientation) # maybe this takes the real pose of the camera (doesn't change it)
+# client.simSetCameraPose("0", pose)
+#
+# camera_info = client.simGetCameraInfo(str(camera_name))
 
 class DroneController:
     """

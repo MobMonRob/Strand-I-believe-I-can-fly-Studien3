@@ -4,6 +4,9 @@ import rospy
 from airsim_instruction_builder import AirsimInstructionBuilder
 from i_believe_i_can_fly_pose_detection.msg import Calibration as CalibrationMsg
 from i_believe_i_can_fly_pose_detection.msg import Instructions as InstructionsMsg
+from i_believe_i_can_fly_pose_detection.msg import FOVInstructions as FOVInstructionsMsg
+
+import os
 
 
 class CommunicationManager:
@@ -21,6 +24,7 @@ class CommunicationManager:
         """
         rospy.Subscriber('flight_instructions', InstructionsMsg, self.receive_instructions_message)
         rospy.Subscriber('calibration_status', CalibrationMsg, self.receive_calibration_status)
+        rospy.Subscriber('fov_instructions', FOVInstructionsMsg, self.receive_fov_instructions_message)
 
     def receive_instructions_message(self, instructions_msg):
         """
@@ -91,3 +95,30 @@ class CommunicationManager:
                                      'Please stretch both arms to the side with a 90 degree angle!', 2)
         elif calibration_msg.status == '2D_FINISHED':
             self.drone.print_message('2D-Calibration finished successfully!', 1)
+
+    def receive_fov_instructions_message(self, fov_instructions_msg):
+        """
+        Evaluates the received fov instructions. Sets these values as instructions for the fov drone controller.
+        :param fov_instructions_msg: received fov instructions
+        """
+        # TODO: do sth with the data
+        # TODO: delete writing files
+
+        if fov_instructions_msg.w is None:
+            rospy.logwarn('Something went wrong getting quaternion data via message!')
+        if fov_instructions_msg.x is None:
+            rospy.logwarn('Something went wrong getting quaternion data via message!')
+        if fov_instructions_msg.y is None:
+            rospy.logwarn('Something went wrong getting quaternion data via message!')
+        if fov_instructions_msg.z is None:
+            rospy.logwarn('Something went wrong getting quaternion data via message!')
+
+        save_path = '/home/informatik/Desktop/Strand-I-believe-I-can-fly-Studien3'
+        file_name = "QuaternionFromMessage.txt"
+
+        completeName = os.path.join(save_path, file_name)
+        file1 = open(completeName, "a")
+        file1.write('Got following quaternion data by view_controller.\n')
+        file1.write("W: %f, X: %f, Y: %f, Z: %f\n\n\n" % (fov_instructions_msg.w, fov_instructions_msg.x,
+                                                          fov_instructions_msg.y, fov_instructions_msg.z))
+        file1.close()

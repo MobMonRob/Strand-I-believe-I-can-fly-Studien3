@@ -4,6 +4,7 @@ import rospy
 import sys
 from calibrator import Calibrator2D
 from fuzzy_controller_2D import FuzzyController2D
+from view_controller_2D import ViewController2D
 from point import Point
 from skeleton import Skeleton
 from pose import Pose
@@ -12,11 +13,14 @@ from i_believe_i_can_fly_person_detection.msg import Skeleton as SkeletonMsg
 from i_believe_i_can_fly_pose_detection.msg import Calibration as CalibrationMsg
 from i_believe_i_can_fly_pose_detection.msg import Instruction as InstructionMsg
 from i_believe_i_can_fly_pose_detection.msg import Instructions as InstructionsMsg
+from i_believe_i_can_fly_pose_detection.msg import FOVInstructions as FOVInstructionsMsg
 
 publisher_calibration = None
 publisher_instructions = None
+publisher_fov_instructions = None
 calibrator_2D = None
 fuzzy_controller_2D = None
+view_controller_2D = None
 frame = 0
 
 
@@ -24,22 +28,26 @@ def init_node():
     """
     Initializes ROS node 'i_believe_i_can_fly_pose_detection'.
     """
-    global publisher_calibration, publisher_instructions, calibrator_2D, fuzzy_controller_2D
+    global publisher_calibration, publisher_instructions, publisher_fov_instructions, calibrator_2D, fuzzy_controller_2D
+    global view_controller_2D
 
     rospy.init_node('i_believe_i_can_fly_pose_detection',
                     log_level = (
                         rospy.DEBUG if rospy.get_param('/i_believe_i_can_fly_pose_detection/debug') else rospy.ERROR))
     publisher_instructions = rospy.Publisher('flight_instructions', InstructionsMsg, queue_size = 10)
     publisher_calibration = rospy.Publisher('calibration_status', CalibrationMsg, queue_size = 10)
+    publisher_fov_instructions = rospy.Publisher('fov_instructions', FOVInstructionsMsg, queue_size = 10)
     rospy.Subscriber('i_believe_i_can_fly', ResetMsg, reset)
 
     if rospy.get_param('/i_believe_i_can_fly_pose_detection/mode') == '2D':
         calibrator_2D = Calibrator2D(publisher_calibration)
         fuzzy_controller_2D = FuzzyController2D()
+        view_controller_2D = ViewController2D()
         rospy.Subscriber('person_detection', SkeletonMsg, detect_pose_2D)
     else:
         rospy.logerr('Invalid mode detected! Allowed values are: \'2D\'')
         sys.exit()
+    rospy.on_shutdown(view_controller_2D.disconnect_imu)
     rospy.spin()
 
 
@@ -102,6 +110,13 @@ def detect_pose_2D(skeleton_msg):
             publish_instructions({Pose.HOLD: 100.0})
             rospy.logwarn('Skeleton at frame %i is missing some important points!', frame)
 
+        # if calibrated get head orientation, not needed when not calibrated
+        fov_instructions = view_controller_2D.detect_head_orientation()
+
+        # publish fov instructions
+        publish_fov_instructions(fov_instructions)
+        rospy.logdebug('Quaternion data: %s', str(fov_instructions))
+
 
 def publish_instructions(instructions):
     """
@@ -117,6 +132,20 @@ def publish_instructions(instructions):
     for key in instructions:
         converted_instructions.append(InstructionMsg(instruction = key, intensity = instructions[key]))
     publisher_instructions.publish(InstructionsMsg(instructions = converted_instructions))
+
+
+def publish_fov_instructions(fov_instructions):
+    """
+    Publishes given fov (field of view) instructions.
+    :param fov_instructions: fov instructions to publish
+    """
+    global publisher_fov_instructions
+
+    if fov_instructions is None:
+        return
+
+    publisher_fov_instructions.publish(FOVInstructionsMsg(w = fov_instructions[0], x = fov_instructions[1],
+                                                          y = fov_instructions[2], z = fov_instructions[3]))
 
 
 def reset(reset_msg):

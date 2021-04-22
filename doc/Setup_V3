@@ -25,5 +25,5 @@ Installation:
 - Continue with 'OpenPose Configuration', make sure to check BUILD_PYTHON in CMake-GUI
 - Run `sudo make install` at '<openpose root directory>/build/python'
 - Install dependencies for ROS Python modules via `pip3 install matplotlib scikit-fuzzy`
-- Install the mbientlab metawear API. To do this, see https://mbientlab.com/tutorials/PyLinux.html. The "Installation" chapter is misleading. The real installation of metawear is described in the chapter "MetaWear". Also consider the "Dependencies" chapter. Please also take a look here (https://github.com/mbientlab/MetaWear-SDK-Python) if you have problems installing metawear.
+- Install the mbientlab metawear API. To do this, see https://mbientlab.com/tutorials/PyLinux.html. The "Installation" chapter is misleading. The real installation of metawear is described in the chapter "MetaWear". Also consider the "Dependencies" chapter. Please also take a look here (https://github.com/mbientlab/MetaWear-SDK-Python) if you have problems installing metawear. Make sure to install it for python2 (ros / catkin) AND python3
 
