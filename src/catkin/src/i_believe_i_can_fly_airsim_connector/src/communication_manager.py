@@ -101,8 +101,6 @@ class CommunicationManager:
         Evaluates the received fov instructions. Sets these values as instructions for the fov drone controller.
         :param fov_instructions_msg: received fov instructions
         """
-        # TODO: do sth with the data
-        # TODO: delete writing files
 
         if fov_instructions_msg.w is None:
             rospy.logwarn('Something went wrong getting quaternion data via message!')
@@ -113,12 +111,6 @@ class CommunicationManager:
         if fov_instructions_msg.z is None:
             rospy.logwarn('Something went wrong getting quaternion data via message!')
 
-        save_path = '/home/informatik/Desktop/Strand-I-believe-I-can-fly-Studien3'
-        file_name = "QuaternionFromMessage.txt"
+        quaternion = [fov_instructions_msg.w, fov_instructions_msg.x, fov_instructions_msg.y, fov_instructions_msg.z]
 
-        completeName = os.path.join(save_path, file_name)
-        file1 = open(completeName, "a")
-        file1.write('Got following quaternion data by view_controller.\n')
-        file1.write("W: %f, X: %f, Y: %f, Z: %f\n\n\n" % (fov_instructions_msg.w, fov_instructions_msg.x,
-                                                          fov_instructions_msg.y, fov_instructions_msg.z))
-        file1.close()
+        self.drone.set_fov(quaternion)

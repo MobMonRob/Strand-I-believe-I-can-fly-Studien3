@@ -14,9 +14,8 @@ import re
 mac_address = 'CB:4C:61:C2:62:39'
 
 # TODO: Change it so you can also use the simulator without imu. Connection error should not make it crash
-# TODO: Maybe we need to log quaternion data during calibration and take the mean value to check
+# TODO: log quaternion data during calibration and take the mean value to check
 #       at which quaternion data we are looking forward
-# TODO: Delete writing files
 
 
 class State:
@@ -30,17 +29,6 @@ class State:
 
         # clear current quaternion data
         del self.quaternion[:]
-
-        save_path = '/home/informatik/Desktop/Strand-I-believe-I-can-fly-Studien3'
-        file_name = "Quaternion.txt"
-
-        completeName = os.path.join(save_path, file_name)
-        file1 = open(completeName, "a")
-
-        if not self.quaternion:
-            file1.write("Quaternion has been cleared.\n")
-
-        file1.write("%s -> %s\n" % (self.device.address, parse_value(data)))
 
         # convert quaternion to String
         quaternion_string = parse_value(data).__str__()
@@ -58,11 +46,6 @@ class State:
         self.quaternion.append(quaternion_x)
         self.quaternion.append(quaternion_y)
         self.quaternion.append(quaternion_z)
-
-        file1.write(quaternion_string + "\n")
-        file1.write("%f, %f, %f, %f\n" % (self.quaternion[0], self.quaternion[1], self.quaternion[2], self.quaternion[3]))
-        file1.write("W: %f, X: %f, Y: %f, Z: %f\n\n\n" % (quaternion_w, quaternion_x, quaternion_y, quaternion_z))
-        file1.close()
 
         # quaternion = copy.deepcopy(data)
 
