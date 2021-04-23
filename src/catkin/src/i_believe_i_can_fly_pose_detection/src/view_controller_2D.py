@@ -8,6 +8,8 @@ from time import sleep
 from threading import Event
 import os
 import re
+import math
+import numpy as np
 
 # from imu_state import State
 
@@ -55,6 +57,26 @@ class ViewController2D:
     def __init__(self):
         global mac_address
         self.imu = MetaWear(mac_address)
+
+        self.calibrated = False
+
+        # arrays to store imu quationion data during calibration
+        self.calibration_quaternion_w = []
+        self.calibration_quaternion_x = []
+        self.calibration_quaternion_y = []
+        self.calibration_quaternion_z = []
+
+        # calibrated imu quaternion data (mean value)
+        self.calibrated_quaternion_w = 0.0
+        self.calibrated_quaternion_x = 0.0
+        self.calibrated_quaternion_y = 0.0
+        self.calibrated_quaternion_z = 0.0
+
+        # calibrated euler angles (in radian)
+        self.calibrated_euler_roll = 0.0
+        self.calibrated_euler_pitch = 0.0
+        self.calibrated_euler_yaw = 0.0
+
         self.states = []
         self.status_connected = self.connect_imu()
         if self.status_connected:
@@ -92,8 +114,7 @@ class ViewController2D:
             libmetawear.mbl_mw_sensor_fusion_enable_data(s.device.board, SensorFusionData.QUATERNION)
             libmetawear.mbl_mw_sensor_fusion_start(s.device.board)
 
-    def detect_head_orientation(self):
-
+    def get_quaternion_data(self):
         # connect to imu
         if not self.status_connected:
             self.status_connected = self.connect_imu()
@@ -108,7 +129,86 @@ class ViewController2D:
         while not self.states[0].quaternion:
             sleep(0.001)
 
-        quaternion = self.states[0].quaternion
+        return self.states[0].quaternion
+
+    def quaternion_to_euler(self, w, x, y, z):
+        """
+            Convert a quaternion into euler angles (roll, pitch, yaw) (radian)
+            roll is rotation around x in radians (counterclockwise)
+            pitch is rotation around y in radians (counterclockwise)
+            yaw is rotation around z in radians (counterclockwise)
+        """
+        t0 = +2.0 * (w * x + y * z)
+        t1 = +1.0 - 2.0 * (x * x + y * y)
+        roll = math.atan2(t0, t1)
+
+        t2 = +2.0 * (w * y - z * x)
+        t2 = +1.0 if t2 > +1.0 else t2
+        t2 = -1.0 if t2 < -1.0 else t2
+        pitch = math.asin(t2)
+
+        t3 = +2.0 * (w * z + x * y)
+        t4 = +1.0 - 2.0 * (y * y + z * z)
+        yaw = math.atan2(t3, t4)
+
+        return [roll, pitch, yaw]  # in radians
+
+    def euler_to_quaternion(self, roll, pitch, yaw):
+        """
+            Convert a euler (radian as input) into quaternion
+        """
+        qx = np.sin(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) - np.cos(roll / 2) * np.sin(pitch/2) * np.sin(yaw/2)
+        qy = np.cos(roll / 2) * np.sin(pitch / 2) * np.cos(yaw / 2) + np.sin(roll / 2) * np.cos(pitch/2) * np.sin(yaw/2)
+        qz = np.cos(roll / 2) * np.cos(pitch / 2) * np.sin(yaw / 2) - np.sin(roll / 2) * np.sin(pitch/2) * np.cos(yaw/2)
+        qw = np.cos(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) + np.sin(roll / 2) * np.sin(pitch/2) * np.sin(yaw/2)
+
+        return [qw, qx, qy, qz]
+
+    def calculate_head_orientation(self, quaternion):
+
+        not_normalized_euler_radian = self.quaternion_to_euler(quaternion[0], quaternion[1], quaternion[2], quaternion[3])
+
+        # normalize it by subtracting current euler values from calibrated euler values
+        # somehow roll axis is mirror-inverted --> subtract calibrated euler value from current euler value
+        normalized_euler_roll = not_normalized_euler_radian[0] - self.calibrated_euler_roll
+        normalized_euler_pitch = self.calibrated_euler_pitch - not_normalized_euler_radian[1]
+        normalized_euler_yaw = self.calibrated_euler_yaw - not_normalized_euler_radian[2]
+
+        normalized_quaternion = self.euler_to_quaternion(normalized_euler_roll, normalized_euler_pitch,
+                                                         normalized_euler_yaw)
+
+        quaternion = [normalized_quaternion[0], normalized_quaternion[1], normalized_quaternion[2],
+                      normalized_quaternion[3]]
+
+        return quaternion
+
+    def detect_head_orientation(self):
+
+        not_normalized_quaternion = self.get_quaternion_data()
+
+        # take last quaternion data as calibrated quaternion data
+        if not self.calibrated:
+
+            self.calibrated_quaternion_w = self.calibration_quaternion_w[len(self.calibration_quaternion_w)-1]
+            self.calibrated_quaternion_x = self.calibration_quaternion_x[len(self.calibration_quaternion_x)-1]
+            self.calibrated_quaternion_y = self.calibration_quaternion_y[len(self.calibration_quaternion_y)-1]
+            self.calibrated_quaternion_z = self.calibration_quaternion_z[len(self.calibration_quaternion_z)-1]
+
+            # convert it in euler vector and use euler vector as calibrated values (here in radian)
+            euler_radian = self.quaternion_to_euler(
+                self.calibrated_quaternion_w, self.calibrated_quaternion_x, self.calibrated_quaternion_y,
+                self.calibrated_quaternion_z)
+
+            # save it as calibrated euler values
+            self.calibrated_euler_roll = euler_radian[0]
+            self.calibrated_euler_pitch = euler_radian[1]
+            self.calibrated_euler_yaw = euler_radian[2]
+
+            self.calibrated = True
+
+        # 'normalize' quaternion
+        quaternion = self.calculate_head_orientation(not_normalized_quaternion)
+
         return quaternion
 
     def unsubscribe_imu_signal(self):
@@ -131,6 +231,28 @@ class ViewController2D:
         # clearing the list of IMUs
         del self.states[:]
         rospy.logwarn('Disconnected to IMU!')
+
+    def start_calibration(self):
+
+        if not self.calibrated:
+
+            # get imu data during 2D-calibration to calculate mean value (the value we are looking forward)
+            quaternion = self.get_quaternion_data()
+
+            self.calibration_quaternion_w.append(quaternion[0])
+            self.calibration_quaternion_x.append(quaternion[1])
+            self.calibration_quaternion_y.append(quaternion[2])
+            self.calibration_quaternion_z.append(quaternion[3])
+        else:
+            self.reset_calibration()
+            self.start_calibration()
+
+    def reset_calibration(self):
+        # clear calibration data
+        del self.calibration_quaternion_w[:]
+        del self.calibration_quaternion_x[:]
+        del self.calibration_quaternion_y[:]
+        del self.calibration_quaternion_z[:]
 
 
 class Error(Exception):

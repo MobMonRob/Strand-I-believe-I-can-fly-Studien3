@@ -95,8 +95,10 @@ def detect_pose_2D(skeleton_msg):
     # check calibration status
     if not calibrator_2D.is_calibrated() and not calibrator_2D.is_calibrating():
         calibrator_2D.start_calibration(skeleton, calibration_2D_finished)
+        view_controller_2D.reset_calibration()
     elif calibrator_2D.is_calibrating():
         calibrator_2D.skeleton_changed(skeleton)
+        view_controller_2D.start_calibration()
     elif calibrator_2D.is_calibrated():
         if skeleton.check_for_important_keypoints():
             skeleton.transform_points()
