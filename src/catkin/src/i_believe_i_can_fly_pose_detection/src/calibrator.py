@@ -3,8 +3,6 @@
 import rospy
 import time
 
-# TODO: get quaternion data during calibration to get mean value
-
 
 class Calibrator2D:
     """

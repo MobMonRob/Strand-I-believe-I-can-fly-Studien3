@@ -18,6 +18,9 @@ class DroneController:
         try:
             self.client = airsim.MultirotorClient()
             self.client.confirmConnection()
+            # fov client necessary to avoid getting error messages "IOLoop already running"
+            self.fov_client = airsim.MultirotorClient()
+            self.fov_client.confirmConnection()
             self.update_rate = 1
             self.flying = False
             self.next_action = None
@@ -122,5 +125,5 @@ class DroneController:
         airsim_quaternion = airsim.Quaternionr(w_val = quaternion[0], x_val = quaternion[1], y_val = quaternion[2],
                                                z_val = quaternion[3])
 
-        # set camerea orientation according to quaternion
-        self.client.simSetCameraOrientation("front_center", airsim_quaternion)
+        # set camera orientation according to quaternion
+        self.fov_client.simSetCameraOrientation("front_center", airsim_quaternion)
