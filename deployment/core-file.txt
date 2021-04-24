@@ -1,0 +1,1 @@
+Irgendwann war auf einmal die "core" datei hier drin. Hat auch ohne diese Datei funktioniert. Irgendwann ging es aber ohne Änderung nicht mehr. Habe dann "core" wieder rein gemacht und ging zwar immernoch nicht, aber nach einem Neustart schon. Lasse es vorsichtshalber drin.
