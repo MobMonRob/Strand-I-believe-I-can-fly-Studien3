@@ -252,6 +252,7 @@ class ViewController2D:
         del self.calibration_quaternion_x[:]
         del self.calibration_quaternion_y[:]
         del self.calibration_quaternion_z[:]
+        self.calibrated = False
 
 
 class Error(Exception):
