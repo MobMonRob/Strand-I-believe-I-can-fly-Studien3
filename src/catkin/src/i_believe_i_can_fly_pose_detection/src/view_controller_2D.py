@@ -99,6 +99,7 @@ class ViewController2D:
         # configure imu, subscribe quaternion signal
         for s in self.states:
             rospy.loginfo('Configuring imu')
+            # min connection interval, max connection interval, latency, timeout
             libmetawear.mbl_mw_settings_set_connection_parameters(s.device.board, 7.5, 7.5, 0, 6000)
             sleep(1.5)
 
