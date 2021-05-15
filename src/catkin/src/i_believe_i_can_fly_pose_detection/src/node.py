@@ -42,12 +42,14 @@ def init_node():
     if rospy.get_param('/i_believe_i_can_fly_pose_detection/mode') == '2D':
         calibrator_2D = Calibrator2D(publisher_calibration)
         fuzzy_controller_2D = FuzzyController2D()
-        view_controller_2D = ViewController2D()
+        if rospy.get_param('/i_believe_i_can_fly_pose_detection/imu'):
+            view_controller_2D = ViewController2D()
         rospy.Subscriber('person_detection', SkeletonMsg, detect_pose_2D)
     else:
         rospy.logerr('Invalid mode detected! Allowed values are: \'2D\'')
         sys.exit()
-    rospy.on_shutdown(view_controller_2D.disconnect_imu)
+    if rospy.get_param('/i_believe_i_can_fly_pose_detection/imu'):
+        rospy.on_shutdown(view_controller_2D.disconnect_imu)
     rospy.spin()
 
 
@@ -95,10 +97,12 @@ def detect_pose_2D(skeleton_msg):
     # check calibration status
     if not calibrator_2D.is_calibrated() and not calibrator_2D.is_calibrating():
         calibrator_2D.start_calibration(skeleton, calibration_2D_finished)
-        view_controller_2D.reset_calibration()
+        if rospy.get_param('/i_believe_i_can_fly_pose_detection/imu'):
+            view_controller_2D.reset_calibration()
     elif calibrator_2D.is_calibrating():
         calibrator_2D.skeleton_changed(skeleton)
-        view_controller_2D.start_calibration()
+        if rospy.get_param('/i_believe_i_can_fly_pose_detection/imu'):
+            view_controller_2D.start_calibration()
     elif calibrator_2D.is_calibrated():
         if skeleton.check_for_important_keypoints():
             skeleton.transform_points()
@@ -112,12 +116,13 @@ def detect_pose_2D(skeleton_msg):
             publish_instructions({Pose.HOLD: 100.0})
             rospy.logwarn('Skeleton at frame %i is missing some important points!', frame)
 
-        # if calibrated get head orientation, not needed when not calibrated
-        fov_instructions = view_controller_2D.detect_head_orientation()
+        if rospy.get_param('/i_believe_i_can_fly_pose_detection/imu'):
+            # if calibrated get head orientation, not needed when not calibrated
+            fov_instructions = view_controller_2D.detect_head_orientation()
 
-        # publish fov instructions
-        publish_fov_instructions(fov_instructions)
-        rospy.logdebug('Quaternion data: %s', str(fov_instructions))
+            # publish fov instructions
+            publish_fov_instructions(fov_instructions)
+            rospy.logdebug('Quaternion data: %s', str(fov_instructions))
 
 
 def publish_instructions(instructions):

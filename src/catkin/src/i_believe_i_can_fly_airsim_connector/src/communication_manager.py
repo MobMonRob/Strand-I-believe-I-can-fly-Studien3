@@ -103,13 +103,21 @@ class CommunicationManager:
         """
 
         if fov_instructions_msg.w is None:
-            rospy.logwarn('Something went wrong getting quaternion data via message!')
+            rospy.logwarn('Something went wrong getting quaternion data via message!'
+                          ' Maybe usage of IMU is deactivated.')
+            return
         if fov_instructions_msg.x is None:
-            rospy.logwarn('Something went wrong getting quaternion data via message!')
+            rospy.logwarn('Something went wrong getting quaternion data via message!'
+                          ' Maybe usage of IMU is deactivated.')
+            return
         if fov_instructions_msg.y is None:
-            rospy.logwarn('Something went wrong getting quaternion data via message!')
+            rospy.logwarn('Something went wrong getting quaternion data via message!'
+                          ' Maybe usage of IMU is deactivated.')
+            return
         if fov_instructions_msg.z is None:
-            rospy.logwarn('Something went wrong getting quaternion data via message!')
+            rospy.logwarn('Something went wrong getting quaternion data via message!'
+                          ' Maybe usage of IMU is deactivated.')
+            return
 
         quaternion = [fov_instructions_msg.w, fov_instructions_msg.x, fov_instructions_msg.y, fov_instructions_msg.z]
 

@@ -15,9 +15,6 @@ import numpy as np
 
 mac_address = 'CB:4C:61:C2:62:39'
 
-# TODO: Change it so you can also use the simulator without imu.
-#       Trying to connect should not make the i_believe_i_can_fly_pose_detection node crash.
-
 
 class State:
     def __init__(self, device):
