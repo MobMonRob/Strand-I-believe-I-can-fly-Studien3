@@ -1,3 +1,3 @@
-Version 3.0 von "I believe I can fly" funktioniert akuell nur, wenn die IMU angeschalten ist. Am Besten vor dem Start von "I believe I can fly" die IMU einschalten.
+Wenn in der Konfiguration die IMU auf true gestellt ist (sie verwendet werden soll) am Besten vor dem Start von "I believe I can fly" die IMU einschalten.
 
 Um die IMU in den Schlafmodus zu setzen und damit Batterie zu sparen bitte die App MetaBase installieren! Mehr dazu in der Anleitung von der MetaMotionC IMU.
