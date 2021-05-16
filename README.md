@@ -1,12 +1,3 @@
 # Strand-I-believe-I-can-fly-Studien3
 
-# Wiki
-
-## auschecken
-git clone --recurse-submodules
-
-Oder: \
-git clone \
-git submodule update --init --recursive
-
-TODO: Doku
+Fortsetzung des Projektes "I believe I can fly 2.0". Integration von Steuerung der Kameraausrichtung anhand der Kopfausrichtung und Implementierung der Steuerung realer Drohnen.

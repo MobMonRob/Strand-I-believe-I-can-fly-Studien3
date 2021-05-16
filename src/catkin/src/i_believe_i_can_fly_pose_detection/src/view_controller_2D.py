@@ -11,8 +11,6 @@ import re
 import math
 import numpy as np
 
-# from imu_state import State
-
 mac_address = 'CB:4C:61:C2:62:39'
 
 
